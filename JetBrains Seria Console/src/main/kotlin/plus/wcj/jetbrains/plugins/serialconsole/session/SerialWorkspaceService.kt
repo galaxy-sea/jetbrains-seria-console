@@ -73,7 +73,7 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
     }
 
     fun nextLanguage() {
-        val languages = SerialLanguage.entries
+        val languages = SerialLanguage.values()
         setLanguage(languages[(languages.indexOf(language) + 1) % languages.size])
     }
 

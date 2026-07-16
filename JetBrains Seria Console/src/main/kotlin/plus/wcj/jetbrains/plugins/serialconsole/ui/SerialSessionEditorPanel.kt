@@ -292,7 +292,7 @@ class SerialSessionEditorPanel(
     }
 
     private fun stopBitsCombo(): ComboBox<StopBits> {
-        return smallComboBox(StopBits.entries.toTypedArray(), StopBits.One).apply {
+        return smallComboBox(StopBits.values(), StopBits.One).apply {
             renderer = stopBitsRenderer()
             selectedItem = session.serialConfig.stopBits
             addActionListener {
@@ -322,7 +322,7 @@ class SerialSessionEditorPanel(
     }
 
     private fun parityCombo(): ComboBox<ParityMode> {
-        return smallComboBox(ParityMode.entries.toTypedArray(), ParityMode.None).apply {
+        return smallComboBox(ParityMode.values(), ParityMode.None).apply {
             selectedItem = session.serialConfig.parity
             addActionListener {
                 (selectedItem as? ParityMode)?.let {
@@ -334,7 +334,7 @@ class SerialSessionEditorPanel(
     }
 
     private fun flowControlCombo(): ComboBox<FlowControl> {
-        return smallComboBox(FlowControl.entries.toTypedArray(), FlowControl.None).apply {
+        return smallComboBox(FlowControl.values(), FlowControl.None).apply {
             renderer = flowControlRenderer()
             selectedItem = session.serialConfig.flowControl
             addActionListener {
@@ -477,7 +477,7 @@ class SerialSessionEditorPanel(
     }
 
     private fun packetModeCombo(): ComboBox<PacketModeItem> {
-        val items = PacketMode.entries.map { PacketModeItem(it) }.toTypedArray()
+        val items = PacketMode.values().map { PacketModeItem(it) }.toTypedArray()
         return smallComboBox(items, items.first()).apply {
             selectedItem = items.firstOrNull { it.mode == session.receiveConfig.packetMode }
             addActionListener {
@@ -529,7 +529,7 @@ class SerialSessionEditorPanel(
     }
 
     private fun appendModeCombo(): ComboBox<AppendModeItem> {
-        val items = AppendMode.entries.map { AppendModeItem(it) }.toTypedArray()
+        val items = AppendMode.values().map { AppendModeItem(it) }.toTypedArray()
         return smallComboBox(items, items.first()).apply {
             selectedItem = items.firstOrNull { it.mode == session.sendConfig.appendMode }
             addActionListener {
@@ -558,7 +558,7 @@ class SerialSessionEditorPanel(
     }
 
     private fun byteOrderCombo(): ComboBox<ByteOrderModeItem> {
-        val items = ByteOrderMode.entries.map { ByteOrderModeItem(it) }.toTypedArray()
+        val items = ByteOrderMode.values().map { ByteOrderModeItem(it) }.toTypedArray()
         return smallComboBox(items, items.first()).apply {
             isEnabled = session.sendConfig.crcAlgorithm != CrcAlgorithms.NONE_ID
             selectedItem = items.firstOrNull { it.mode == session.sendConfig.crcByteOrder }
