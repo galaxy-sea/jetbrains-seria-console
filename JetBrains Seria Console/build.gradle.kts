@@ -1,10 +1,14 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.changelog")
     id("org.jetbrains.intellij.platform")
 }
+
+version = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy.M.d.1HHmmss"))
 
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {

@@ -28,7 +28,6 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.RegionPainter
 import com.intellij.util.ui.UIUtil
@@ -425,11 +424,7 @@ class SerialSessionEditorPanel(
 
     private fun lineStatusLabel(label: String, value: Boolean): JBLabel {
         return JBLabel(label).apply {
-            icon = if (value) {
-                IconUtil.colorize(AllIcons.Debugger.ThreadRunning, JBColor.GREEN)
-            } else {
-                IconUtil.colorize(AllIcons.Debugger.ThreadAtBreakpoint, JBColor.GRAY)
-            }
+            icon = if (value) AllIcons.General.SuccessLogin else AllIcons.General.BalloonInformation
             horizontalTextPosition = SwingConstants.RIGHT
             toolTipText = "$label ${onOff(value)}"
         }
