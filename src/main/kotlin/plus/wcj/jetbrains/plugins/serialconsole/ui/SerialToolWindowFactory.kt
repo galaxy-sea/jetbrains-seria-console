@@ -1,6 +1,7 @@
 package plus.wcj.jetbrains.plugins.serialconsole.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -51,6 +52,7 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
     private val searchField = JBTextField()
     private val customPortField = JBTextField()
     private val customPortButton = JButton()
+    private val natButton = JButton("NAT")
     private val refreshButton = JButton()
 
     init {
@@ -110,8 +112,13 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
                 }, BorderLayout.NORTH)
                 add(JBPanel<JBPanel<*>>(BorderLayout(6, 0)).apply {
                     add(customPortField, BorderLayout.CENTER)
-                    add(customPortButton.apply {
-                        addActionListener { openCustomPort() }
+                    add(JBPanel<JBPanel<*>>(BorderLayout(6, 0)).apply {
+                        add(customPortButton.apply {
+                            addActionListener { openCustomPort() }
+                        }, BorderLayout.CENTER)
+                        add(natButton.apply {
+                            addActionListener { openVirtualSerialPortHelp() }
+                        }, BorderLayout.EAST)
                     }, BorderLayout.EAST)
                 }, BorderLayout.SOUTH)
             }, BorderLayout.NORTH)
@@ -125,6 +132,10 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
 
     private fun openCustomPort() {
         workspace.openCustomPort(customPortField.text)
+    }
+
+    private fun openVirtualSerialPortHelp() {
+        BrowserUtil.browse(VIRTUAL_SERIAL_PORT_HELP_URL)
     }
 
     private fun renderPortDetail(port: SerialPortDescriptor?) {
@@ -168,6 +179,7 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
         customPortButton.text = t("open")
         refreshButton.text = t("refresh")
         languageButton.text = "${t("language")}: ${workspace.language.displayName}"
+        natButton.text = "NAT"
     }
 
     private fun applyPortFilter() {
@@ -205,6 +217,11 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
     private fun <T> replaceItems(model: DefaultListModel<T>, items: List<T>) {
         model.clear()
         items.forEach(model::addElement)
+    }
+
+    companion object {
+        private const val VIRTUAL_SERIAL_PORT_HELP_URL =
+            "https://github.com/galaxy-sea/jetbrains-seria-console#virtual-serial-port"
     }
 }
 

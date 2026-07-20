@@ -43,7 +43,7 @@ class SerialWorkspaceSettings : PersistentStateComponent<SerialWorkspaceState> {
             SerialPortDescriptor(
                 description = port.description.ifBlank { "Custom" },
                 path = port.path,
-                alias = port.alias.ifBlank { port.path },
+                alias = port.alias,
                 status = ConnectionStatus.Disconnected,
             )
         }

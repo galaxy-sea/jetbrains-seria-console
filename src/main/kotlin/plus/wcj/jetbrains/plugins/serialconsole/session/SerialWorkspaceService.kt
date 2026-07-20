@@ -46,10 +46,14 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
     val sessions: MutableList<SerialSession> = mutableListOf()
 
     init {
-        settings.customPorts().forEach { port ->
-            customPorts[port.path] = port
-        }
-        refreshPorts()
+        val scannedPorts = SerialPortScanner.scan()
+        settings.customPorts()
+            .filter { portNameExists(it.alias, scannedPorts) }
+            .forEach { port ->
+                customPorts[port.path] = port
+            }
+        settings.saveCustomPorts(customPorts.values)
+        ports = mergedPorts(scannedPorts)
     }
 
     fun addListener(listener: SerialWorkspaceListener) {
@@ -61,7 +65,9 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
     }
 
     fun refreshPorts() {
-        ports = mergedPorts(SerialPortScanner.scan())
+        val scannedPorts = SerialPortScanner.scan()
+        pruneMissingCustomPorts(scannedPorts)
+        ports = mergedPorts(scannedPorts)
         dispatcher.multicaster.workspaceChanged()
     }
 
@@ -108,7 +114,8 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
 
     fun openCustomPort(portName: String) {
         val trimmed = portName.trim()
-        if (trimmed.isEmpty()) return
+        val scannedPorts = SerialPortScanner.scan()
+        if (trimmed.isEmpty() || !portNameExists(trimmed, scannedPorts)) return
 
         val resolvedPath = SerialPortScanner.resolveSystemPortPath(trimmed)
         val portPath = resolvedPath.ifBlank { trimmed }
@@ -122,8 +129,29 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
             )
         }
         settings.saveCustomPorts(customPorts.values)
-        ports = mergedPorts(SerialPortScanner.scan())
+        ports = mergedPorts(scannedPorts)
         openSession(port)
+    }
+
+    private fun pruneMissingCustomPorts(scannedPorts: List<SerialPortDescriptor>) {
+        val missingKeys = customPorts.values
+            .filterNot { portNameExists(it.alias, scannedPorts) }
+            .map { it.path }
+        if (missingKeys.isEmpty()) return
+
+        missingKeys.forEach(customPorts::remove)
+        settings.saveCustomPorts(customPorts.values)
+    }
+
+    private fun portNameExists(portName: String, scannedPorts: List<SerialPortDescriptor>): Boolean {
+        if (portName.isBlank()) return false
+
+        val resolvedPath = SerialPortScanner.resolveSystemPortPath(portName)
+        return scannedPorts.any { port ->
+            port.path == portName ||
+                port.alias == portName ||
+                (resolvedPath.isNotBlank() && port.path == resolvedPath)
+        }
     }
 
     private fun mergedPorts(scannedPorts: List<SerialPortDescriptor>): List<SerialPortDescriptor> {
