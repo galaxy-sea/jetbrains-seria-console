@@ -10,10 +10,9 @@ object SerialPortScanner {
             .map { port ->
                 val systemPath = port.systemPortPath.orEmpty().ifBlank { port.systemPortName.orEmpty() }
                 SerialPortDescriptor(
-                    name = port.systemPortName.orEmpty(),
                     description = port.descriptivePortName.orEmpty().ifBlank { port.portDescription.orEmpty() },
                     path = systemPath,
-                    identityPath = systemPath,
+                    alias = systemPath,
                     vendor = port.manufacturer.orEmpty().ifBlank { "Unknown" },
                     vid = port.vendorID.toHexId(),
                     pid = port.productID.toHexId(),
@@ -24,8 +23,8 @@ object SerialPortScanner {
             .ifEmpty {
                 listOf(
                     SerialPortDescriptor(
-                        name = "No Ports",
                         description = "No serial ports detected",
+                        alias = "No Ports",
                         status = ConnectionStatus.Disconnected,
                     )
                 )

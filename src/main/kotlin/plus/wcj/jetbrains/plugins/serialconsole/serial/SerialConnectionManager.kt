@@ -106,8 +106,6 @@ class SerialConnectionManager {
         return true
     }
 
-    fun isConnected(sessionId: String): Boolean = connections[sessionId]?.port?.isOpen == true
-
     fun setFlowControl(sessionId: String, flowControl: FlowControl): Boolean {
         val port = connections[sessionId]?.port ?: return false
         return port.setFlowControl(flowControl(flowControl))

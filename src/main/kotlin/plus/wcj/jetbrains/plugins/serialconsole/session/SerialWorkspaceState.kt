@@ -7,10 +7,9 @@ class SerialWorkspaceState {
 }
 
 class SerialPortState {
-    var name: String = ""
     var description: String = "Custom"
     var path: String = ""
-    var identityPath: String = ""
+    var alias: String = ""
 }
 
 class SerialPortSettingsState {

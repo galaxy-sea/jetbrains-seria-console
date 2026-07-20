@@ -135,7 +135,7 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
             return
         }
 
-        detailPanel.add(sectionPanel(port.name) {
+        detailPanel.add(sectionPanel(port.alias) {
             add(labelValue(t("vendor"), port.vendor))
             add(labelValue(t("vid"), port.vid))
             add(labelValue(t("pid"), port.pid))
@@ -149,13 +149,13 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
     private fun portPopup(port: SerialPortDescriptor?): JPopupMenu {
         return JPopupMenu().apply {
             add(JMenuItem(t("open")).apply {
-                isEnabled = port != null && port.name != "No Ports"
+                isEnabled = port != null && port.path.isNotBlank()
                 addActionListener { port?.let { workspace.openSession(it) } }
             })
             add(JMenuItem(t("copyPortName")).apply {
                 isEnabled = port != null
                 addActionListener {
-                    port?.let { CopyPasteManager.getInstance().setContents(StringSelection(it.name)) }
+                    port?.let { CopyPasteManager.getInstance().setContents(StringSelection(it.path)) }
                 }
             })
             add(JMenuItem(t("properties")).apply { isEnabled = false })
@@ -171,10 +171,10 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
     }
 
     private fun applyPortFilter() {
-        val selectedName = portsList.selectedValue?.name
+        val selectedKey = portsList.selectedValue?.path
         val ports = filteredPorts()
         replaceItems(portsModel, ports)
-        portsList.selectedIndex = ports.indexOfFirst { it.name == selectedName }.takeIf { it >= 0 } ?: -1
+        portsList.selectedIndex = ports.indexOfFirst { it.path == selectedKey }.takeIf { it >= 0 } ?: -1
         renderPortDetail(portsList.selectedValue ?: ports.firstOrNull())
     }
 
@@ -187,9 +187,8 @@ private class SerialToolWindowPanel(project: Project) : JBPanel<SerialToolWindow
 
         return workspace.ports.filter { port ->
             val searchableText = listOf(
-                port.name,
                 port.path,
-                port.identityPath,
+                port.alias,
                 port.description,
                 port.vendor,
                 port.vid,
@@ -222,7 +221,7 @@ private class PortRenderer(private val workspace: SerialWorkspaceService) : Defa
         val component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus) as JLabel
         val port = value as? SerialPortDescriptor
         val session = port?.let { descriptor ->
-            workspace.sessions.firstOrNull { it.port.key() == descriptor.key() }
+            workspace.sessions.firstOrNull { it.port.path == descriptor.path }
         }
         component.icon = when (session?.status) {
             ConnectionStatus.Connected -> AllIcons.Actions.Execute
@@ -235,7 +234,7 @@ private class PortRenderer(private val workspace: SerialWorkspaceService) : Defa
     }
 
     private fun renderPortText(port: SerialPortDescriptor, foreground: Color, isSelected: Boolean): String {
-        val path = StringUtil.escapeXmlEntities(port.displayPath())
+        val path = StringUtil.escapeXmlEntities(port.alias)
         val description = StringUtil.escapeXmlEntities(port.description)
         val descriptionStyle = if (isSelected) {
             ""

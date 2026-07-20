@@ -47,7 +47,7 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
 
     init {
         settings.customPorts().forEach { port ->
-            customPorts[port.displayPath()] = port
+            customPorts[port.path] = port
         }
         refreshPorts()
     }
@@ -78,10 +78,10 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
     }
 
     fun openSession(port: SerialPortDescriptor) {
-        if (port.name == "No Ports") return
+        if (port.path.isBlank()) return
 
-        val portKey = port.key()
-        val existing = sessions.firstOrNull { it.port.key() == portKey }
+        val portKey = port.path
+        val existing = sessions.firstOrNull { it.port.path == portKey }
         if (existing != null) {
             focusSession(existing.id)
             return
@@ -89,9 +89,9 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
 
         val session = SerialSession(
             id = UUID.randomUUID().toString(),
-            name = port.name,
+            name = port.alias,
             port = port,
-            serialConfig = SerialConnectionConfig(portName = port.name),
+            serialConfig = SerialConnectionConfig(portName = port.path),
             receiveConfig = ReceiveConfig(),
             sendConfig = SendConfig(),
             status = ConnectionStatus.Disconnected,
@@ -110,12 +110,14 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
         val trimmed = portName.trim()
         if (trimmed.isEmpty()) return
 
-        val port = customPorts.getOrPut(trimmed) {
+        val resolvedPath = SerialPortScanner.resolveSystemPortPath(trimmed)
+        val portPath = resolvedPath.ifBlank { trimmed }
+        val portAlias = trimmed.takeIf { resolvedPath.isNotBlank() && resolvedPath != trimmed } ?: portPath
+        val port = customPorts.getOrPut(portPath) {
             SerialPortDescriptor(
-                name = trimmed,
                 description = "Custom",
-                path = trimmed,
-                identityPath = SerialPortScanner.resolveSystemPortPath(trimmed),
+                path = portPath,
+                alias = portAlias,
                 status = ConnectionStatus.Disconnected,
             )
         }
@@ -125,13 +127,13 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
     }
 
     private fun mergedPorts(scannedPorts: List<SerialPortDescriptor>): List<SerialPortDescriptor> {
-        val detectedPorts = scannedPorts.filter { it.name != "No Ports" }
+        val detectedPorts = scannedPorts.filter { it.path.isNotBlank() }
         val mergedPorts = linkedMapOf<String, SerialPortDescriptor>()
         detectedPorts.forEach { port ->
-            mergedPorts[port.key()] = port
+            mergedPorts[port.path] = port
         }
         customPorts.values.forEach { port ->
-            mergedPorts[port.key()] = port
+            mergedPorts[port.path] = port
         }
         return mergedPorts.values.toList().ifEmpty { scannedPorts }
     }
@@ -180,12 +182,12 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
 
     fun disconnectSession(sessionId: String) {
         flushReceivePacket(sessionId)
-        connectionManager.disconnect(sessionId)
         findSession(sessionId)?.let { session ->
             session.status = ConnectionStatus.Disconnected
             updateLineState(session.lineState, SerialLineState())
             appendLogMessage(session, t("connectionLog.disconnected", session.serialConfig.portName))
         }
+        connectionManager.disconnect(sessionId)
         dispatcher.multicaster.workspaceChanged()
     }
 
@@ -230,6 +232,10 @@ class SerialWorkspaceService(private val project: Project) : Disposable {
 
     fun closeSession(sessionId: String) {
         flushReceivePacket(sessionId)
+        findSession(sessionId)?.let { session ->
+            session.status = ConnectionStatus.Disconnected
+            updateLineState(session.lineState, SerialLineState())
+        }
         connectionManager.disconnect(sessionId)
         sessions.removeIf { it.id == sessionId }
         sessionFiles.remove(sessionId)

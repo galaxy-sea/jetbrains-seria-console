@@ -54,24 +54,15 @@ enum class SerialMessageDirection {
 }
 
 data class SerialPortDescriptor(
-    val name: String,
     val description: String,
     val path: String = "",
-    val identityPath: String = "",
+    val alias: String = "",
     val vendor: String = "Unknown",
     val vid: String = "-",
     val pid: String = "-",
     val serialNumber: String = "-",
     val status: ConnectionStatus = ConnectionStatus.Disconnected,
-) {
-    fun key(): String {
-        return identityPath.ifBlank { path }.ifBlank { name }.trim()
-    }
-
-    fun displayPath(): String {
-        return path.ifBlank { name }
-    }
-}
+)
 
 data class SerialConnectionConfig(
     var portName: String,

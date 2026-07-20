@@ -41,10 +41,9 @@ class SerialWorkspaceSettings : PersistentStateComponent<SerialWorkspaceState> {
     fun customPorts(): List<SerialPortDescriptor> {
         return state.customPorts.map { port ->
             SerialPortDescriptor(
-                name = port.name,
                 description = port.description.ifBlank { "Custom" },
                 path = port.path,
-                identityPath = port.identityPath,
+                alias = port.alias.ifBlank { port.path },
                 status = ConnectionStatus.Disconnected,
             )
         }
@@ -53,16 +52,15 @@ class SerialWorkspaceSettings : PersistentStateComponent<SerialWorkspaceState> {
     fun saveCustomPorts(ports: Collection<SerialPortDescriptor>) {
         state.customPorts = ports.map { port ->
             SerialPortState().apply {
-                name = port.name
                 description = port.description
                 path = port.path
-                identityPath = port.identityPath
+                alias = port.alias
             }
         }.toMutableList()
     }
 
     fun saveSessionSettings(session: SerialSession) {
-        val key = session.port.key()
+        val key = session.port.path
         val settings = state.portSettings.firstOrNull { it.key == key } ?: SerialPortSettingsState().also {
             it.key = key
             state.portSettings += it
@@ -86,7 +84,7 @@ class SerialWorkspaceSettings : PersistentStateComponent<SerialWorkspaceState> {
     }
 
     fun applySessionSettings(session: SerialSession) {
-        val settings = state.portSettings.firstOrNull { it.key == session.port.key() } ?: return
+        val settings = state.portSettings.firstOrNull { it.key == session.port.path } ?: return
         session.serialConfig.baudRate = settings.baudRate
         session.serialConfig.dataBits = settings.dataBits
         session.serialConfig.stopBits = enumValueOrDefault(settings.stopBits, StopBits.One)
