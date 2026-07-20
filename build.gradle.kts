@@ -34,4 +34,7 @@ intellijPlatform {
             sinceBuild.set("233")
         }
     }
+    publishing {
+        token = providers.gradleProperty("intellijPlatformPublishingToken")
+    }
 }
